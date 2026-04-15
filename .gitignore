@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-ssr
+.vite
+
+# psd source files (too large)
+*.psd
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# env / logs
+.env
+.env.local
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

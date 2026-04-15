@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>回胴風雲児2ショットメーカー | サトシと２ショットを撮影しよう</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <h1>回胴風雲児2ショットメーカー</h1>
+      <p class="lead">サトシと２ショットを撮影しよう</p>
+      <p class="sub">#回胴風雲児 #パニック7 #パチスロ漫画</p>
+    </header>
+
+    <main class="main">
+      <div class="canvas-wrap">
+        <canvas id="stage" width="750" height="1000"></canvas>
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <p id="loadingText">背景を除去中…</p>
+        </div>
+      </div>
+
+      <section class="controls">
+        <div class="row">
+          <label class="btn primary">
+            自撮りを選ぶ
+            <input type="file" id="fileInput" accept="image/*" hidden />
+          </label>
+          <button id="resetSelfieBtn" class="btn" disabled>自撮りを削除</button>
+        </div>
+
+        <div class="row">
+          <label class="field">
+            <span>キャプション</span>
+            <input type="text" id="captionInput" maxlength="24" placeholder="例: 覚悟を決めろ！" />
+          </label>
+        </div>
+
+        <div class="row hint">
+          <p>ドラッグで移動 / ピンチ・ホイール・四隅ハンドルでリサイズ / タップで選択</p>
+        </div>
+
+        <div class="row">
+          <button id="downloadBtn" class="btn">画像を保存</button>
+          <button id="shareBtn" class="btn">シェア</button>
+          <a id="xShareBtn" class="btn x-btn" href="#" target="_blank" rel="noopener">Xに投稿</a>
+        </div>
+      </section>
+    </main>
+
+    <section class="promo">
+      <a class="promo-link" href="https://www.guideworks.co.jp/book/b669998.html?srsltid=AfmBOoqNY82F1mypaAhElmfOENbqU5eYknSOuiiQSq9fhwpN5B5DUZWH" target="_blank" rel="noopener noreferrer">
+        <span class="promo-label">最新刊はこちらから！</span>
+        <span class="promo-title">回胴風雲児 13巻</span>
+        <span class="promo-arrow">→</span>
+      </a>
+    </section>
+
+    <footer class="about">
+      <h2>このアプリについて</h2>
+      <p>
+        「回胴風雲児2ショットメーカー」は、主人公のサトシと一緒に2ショット風のチェキ画像が作れるアプリです。
+        自撮り写真をアップロードすると、背景を自動で切り抜いてサトシの隣に並べ、コミック風のフレームで仕上がります。
+      </p>
+      <ul class="points">
+        <li><strong>写真はどこにも送信されません。</strong>アップロードした画像はあなたのブラウザの中だけで処理されます。</li>
+        <li><strong>背景除去はブラウザ内で完結。</strong>AIモデル（@imgly/background-removal）があなたの端末でそのまま動くので、サーバーにデータは一切流れません。</li>
+        <li><strong>プライバシーを守って遊べます。</strong>画像は保存も共有もされず、ページを閉じれば消えるので安心して使えます。</li>
+        <li><strong>スマホでもPCでも動きます。</strong>最新ブラウザがあれば、モバイル・デスクトップのどちらからでもOK。</li>
+      </ul>
+      <p class="about-promo">
+        「回胴風雲児」13巻好評配信中！
+        ぜひ本編を読んで、作ったチェキを <strong>#回胴風雲児 #パニック7 #パチスロ漫画</strong> でシェアしてください。
+      </p>
+
+      <section class="notice">
+        <h3>【プライバシーについて】</h3>
+        <p>
+          アップロードした写真はサーバーに送信されません。<br />
+          背景除去を含むすべての処理はお使いの端末のブラウザ内で完結します。
+        </p>
+      </section>
+
+      <section class="notice">
+        <h3>【ご利用上の注意】</h3>
+        <ul>
+          <li>生成した画像に含まれるキャラクターは ©MORI YUSAKU, GENDA SATOSHI. GUIDEWORKS が著作権を保有しています。</li>
+          <li>生成画像の商用利用・二次配布・転載は禁止です。</li>
+          <li>SNSへの投稿は個人の楽しむ範囲でお願いします。</li>
+          <li>元画像（自撮り写真）の肖像権・投稿先の規約はご自身でご確認ください。</li>
+        </ul>
+      </section>
+
+      <section class="notice">
+        <h3>【技術について】</h3>
+        <p>
+          本サービスのコードは AGPL-3.0 ライセンスで公開しています。<br />
+          背景除去には <a href="https://github.com/imgly/background-removal-js" target="_blank" rel="noopener noreferrer">@imgly/background-removal</a> を使用しています。
+        </p>
+      </section>
+
+      <p class="credit">© MORI YUSAKU, GENDA SATOSHI. GUIDEWORKS</p>
+    </footer>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
