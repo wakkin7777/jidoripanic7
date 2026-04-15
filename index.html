@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>回胴風雲児2ショットメーカー | サトシと２ショットを撮影しよう</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
   <div id="app">
     <header class="header">
-      <h1>回胴風雲児2ショットメーカー</h1>
+      <h1>回胴風雲児<br />２ショットメーカー</h1>
       <p class="lead">サトシと２ショットを撮影しよう</p>
       <p class="sub">#回胴風雲児 #パニック7 #パチスロ漫画</p>
     </header>
@@ -30,6 +33,7 @@
             <input type="file" id="fileInput" accept="image/*" hidden />
           </label>
           <button id="resetSelfieBtn" class="btn" disabled>自撮りを削除</button>
+          <button id="charSwapBtn" class="btn gold">中武GOD</button>
         </div>
 
         <div class="row">
@@ -40,7 +44,7 @@
         </div>
 
         <div class="row hint">
-          <p>ドラッグで移動 / ピンチ・ホイール・四隅ハンドルでリサイズ / タップで選択</p>
+          <p>自撮り・サトシ・キャプションをタップで選択 → ドラッグで移動 / ピンチ・ホイール・四隅ハンドルでリサイズ</p>
         </div>
 
         <div class="row">

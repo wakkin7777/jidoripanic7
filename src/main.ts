@@ -3,9 +3,13 @@ import { removeBackground } from '@imgly/background-removal';
 const CANVAS_W = 750;
 const CANVAS_H = 1000;
 
-// Caption strip area (layer 5): user-editable 1-line text
-const CAPTION_AREA = { x: 40, y: 760, w: 670, h: 48 };
-const CAPTION_FONT = '900 32px "Hiragino Kaku Gothic StdN", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", system-ui, sans-serif';
+// Caption (layer 5): user-editable 1-line text, draggable + resizable
+const CAPTION_BASE_PX = 44;
+const CAPTION_FONT_FAMILY = '"Zen Kurenaido", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif';
+const CAPTION_COLOR = '#e63946';
+const CAPTION_ROTATION = (-3 * Math.PI) / 180;
+
+type LayerKey = 'selfie' | 'satoshi' | 'caption';
 
 interface Transform {
   x: number;
@@ -20,14 +24,15 @@ interface Layer {
 
 type Mode =
   | null
-  | { type: 'move'; layer: 'selfie' | 'satoshi'; startX: number; startY: number; startT: Transform }
-  | { type: 'resize'; layer: 'selfie' | 'satoshi'; corner: 'tl' | 'tr' | 'bl' | 'br'; startDist: number; startScale: number }
-  | { type: 'pinch'; layer: 'selfie' | 'satoshi'; startDist: number; startScale: number };
+  | { type: 'move'; layer: LayerKey; startX: number; startY: number; startT: Transform }
+  | { type: 'resize'; layer: LayerKey; corner: 'tl' | 'tr' | 'bl' | 'br'; startDist: number; startScale: number }
+  | { type: 'pinch'; layer: LayerKey; startDist: number; startScale: number };
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 const fileInput = document.getElementById('fileInput') as HTMLInputElement;
 const resetSelfieBtn = document.getElementById('resetSelfieBtn') as HTMLButtonElement;
+const charSwapBtn = document.getElementById('charSwapBtn') as HTMLButtonElement;
 const captionInput = document.getElementById('captionInput') as HTMLInputElement;
 const downloadBtn = document.getElementById('downloadBtn') as HTMLButtonElement;
 const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement;
@@ -39,8 +44,13 @@ let back: HTMLImageElement | null = null;
 let frame: HTMLImageElement | null = null;
 let satoshi: Layer | null = null;
 let selfie: Layer | null = null;
-let selected: 'selfie' | 'satoshi' | null = null;
+let satoshiImg: HTMLImageElement | null = null;
+let godImg: HTMLImageElement | null = null;
+type CharKey = 'satoshi' | 'god';
+let currentChar: CharKey = 'satoshi';
+let selected: LayerKey | null = null;
 let caption = '';
+const captionT: Transform = { x: CANVAS_W / 2, y: 720, scale: 1 };
 let mode: Mode = null;
 const activePointers = new Map<number, { x: number; y: number }>();
 let needsRedraw = true;
@@ -81,13 +91,58 @@ function getBounds(layer: Layer) {
   };
 }
 
+function captionFontString(scale: number) {
+  return `${CAPTION_BASE_PX * scale}px ${CAPTION_FONT_FAMILY}`;
+}
+
+function getCaptionBounds() {
+  if (!caption) return null;
+  ctx.save();
+  ctx.font = captionFontString(captionT.scale);
+  const m = ctx.measureText(caption);
+  ctx.restore();
+  const w = Math.max(m.width + 24, 40);
+  const h = CAPTION_BASE_PX * captionT.scale * 1.3;
+  return {
+    left: captionT.x - w / 2,
+    top: captionT.y - h / 2,
+    right: captionT.x + w / 2,
+    bottom: captionT.y + h / 2,
+    w,
+    h
+  };
+}
+
+function getBoundsByKey(key: LayerKey) {
+  if (key === 'selfie' && selfie) return getBounds(selfie);
+  if (key === 'satoshi' && satoshi) return getBounds(satoshi);
+  if (key === 'caption') return getCaptionBounds();
+  return null;
+}
+
+function transformByKey(key: LayerKey): Transform | null {
+  if (key === 'selfie' && selfie) return selfie.t;
+  if (key === 'satoshi' && satoshi) return satoshi.t;
+  if (key === 'caption') return captionT;
+  return null;
+}
+
 function pointInLayer(layer: Layer, px: number, py: number) {
   const b = getBounds(layer);
   return px >= b.left && px <= b.right && py >= b.top && py <= b.bottom;
 }
 
-function handleHit(layer: Layer, px: number, py: number): 'tl' | 'tr' | 'bl' | 'br' | null {
-  const b = getBounds(layer);
+function pointInCaption(px: number, py: number) {
+  const b = getCaptionBounds();
+  if (!b) return false;
+  return px >= b.left && px <= b.right && py >= b.top && py <= b.bottom;
+}
+
+function handleHitByBounds(
+  b: { left: number; top: number; right: number; bottom: number },
+  px: number,
+  py: number
+): 'tl' | 'tr' | 'bl' | 'br' | null {
   const r = 28;
   const corners: Array<['tl' | 'tr' | 'bl' | 'br', number, number]> = [
     ['tl', b.left, b.top],
@@ -106,8 +161,7 @@ function drawLayer(layer: Layer) {
   ctx.drawImage(layer.img, b.left, b.top, b.w, b.h);
 }
 
-function drawSelection(layer: Layer) {
-  const b = getBounds(layer);
+function drawSelectionBox(b: { left: number; top: number; right: number; bottom: number; w: number; h: number }) {
   ctx.save();
   ctx.strokeStyle = '#ffcc00';
   ctx.lineWidth = 3;
@@ -133,26 +187,26 @@ function drawSelection(layer: Layer) {
   ctx.restore();
 }
 
-function drawCaption() {
+function drawCaptionTo(c: CanvasRenderingContext2D) {
   if (!caption) return;
-  ctx.save();
-  ctx.font = CAPTION_FONT;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const cx = CAPTION_AREA.x + CAPTION_AREA.w / 2;
-  const cy = CAPTION_AREA.y + CAPTION_AREA.h / 2;
-  let text = caption;
-  while (text.length > 0 && ctx.measureText(text).width > CAPTION_AREA.w - 16) {
-    text = text.slice(0, -1);
-  }
-  ctx.lineJoin = 'round';
-  ctx.miterLimit = 2;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = '#111';
-  ctx.strokeText(text, cx, cy);
-  ctx.fillStyle = '#111';
-  ctx.fillText(text, cx, cy);
-  ctx.restore();
+  c.save();
+  c.font = captionFontString(captionT.scale);
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.translate(captionT.x, captionT.y);
+  c.rotate(CAPTION_ROTATION);
+  c.lineJoin = 'round';
+  c.miterLimit = 2;
+  c.lineWidth = 5 * captionT.scale;
+  c.strokeStyle = 'rgba(255,255,255,0.85)';
+  c.strokeText(caption, 0, 0);
+  c.fillStyle = CAPTION_COLOR;
+  c.fillText(caption, 0, 0);
+  c.restore();
+}
+
+function drawCaption() {
+  drawCaptionTo(ctx);
 }
 
 function render() {
@@ -179,8 +233,10 @@ function render() {
   drawCaption();
 
   // Selection UI (not included in export)
-  if (selected === 'selfie' && selfie) drawSelection(selfie);
-  if (selected === 'satoshi' && satoshi) drawSelection(satoshi);
+  if (selected) {
+    const b = getBoundsByKey(selected);
+    if (b) drawSelectionBox(b);
+  }
 }
 
 function renderForExport(): HTMLCanvasElement {
@@ -196,24 +252,7 @@ function renderForExport(): HTMLCanvasElement {
   if (selfie) drawL(selfie);
   if (satoshi) drawL(satoshi);
   if (frame) octx.drawImage(frame, 0, 0, CANVAS_W, CANVAS_H);
-  if (caption) {
-    octx.font = CAPTION_FONT;
-    octx.textAlign = 'center';
-    octx.textBaseline = 'middle';
-    let text = caption;
-    while (text.length > 0 && octx.measureText(text).width > CAPTION_AREA.w - 16) {
-      text = text.slice(0, -1);
-    }
-    const cx = CAPTION_AREA.x + CAPTION_AREA.w / 2;
-    const cy = CAPTION_AREA.y + CAPTION_AREA.h / 2;
-    octx.lineJoin = 'round';
-    octx.miterLimit = 2;
-    octx.lineWidth = 3;
-    octx.strokeStyle = '#111';
-    octx.strokeText(text, cx, cy);
-    octx.fillStyle = '#111';
-    octx.fillText(text, cx, cy);
-  }
+  drawCaptionTo(octx);
   return off;
 }
 
@@ -234,7 +273,8 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-function pickLayer(px: number, py: number): 'selfie' | 'satoshi' | null {
+function pickLayer(px: number, py: number): LayerKey | null {
+  if (caption && pointInCaption(px, py)) return 'caption';
   if (satoshi && pointInLayer(satoshi, px, py)) return 'satoshi';
   if (selfie && pointInLayer(selfie, px, py)) return 'selfie';
   return null;
@@ -248,30 +288,30 @@ function pointerDown(e: PointerEvent) {
   if (activePointers.size === 2 && selected) {
     const pts = [...activePointers.values()];
     const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-    const layer = selected === 'selfie' ? selfie : satoshi;
-    if (layer) {
-      mode = { type: 'pinch', layer: selected, startDist: dist, startScale: layer.t.scale };
+    const t = transformByKey(selected);
+    if (t) {
+      mode = { type: 'pinch', layer: selected, startDist: dist, startScale: t.scale };
     }
     return;
   }
 
-  // Resize handle hit
+  // Resize handle hit (only on currently selected layer)
   if (selected) {
-    const layer = selected === 'selfie' ? selfie : satoshi;
-    if (layer) {
-      const corner = handleHit(layer, p.x, p.y);
+    const b = getBoundsByKey(selected);
+    const t = transformByKey(selected);
+    if (b && t) {
+      const corner = handleHitByBounds(b, p.x, p.y);
       if (corner) {
-        const b = getBounds(layer);
         const dist = Math.hypot(
-          (corner === 'tl' || corner === 'bl' ? b.left : b.right) - layer.t.x,
-          (corner === 'tl' || corner === 'tr' ? b.top : b.bottom) - layer.t.y
+          (corner === 'tl' || corner === 'bl' ? b.left : b.right) - t.x,
+          (corner === 'tl' || corner === 'tr' ? b.top : b.bottom) - t.y
         );
         mode = {
           type: 'resize',
           layer: selected,
           corner,
           startDist: dist,
-          startScale: layer.t.scale
+          startScale: t.scale
         };
         return;
       }
@@ -281,13 +321,13 @@ function pointerDown(e: PointerEvent) {
   const picked = pickLayer(p.x, p.y);
   if (picked) {
     selected = picked;
-    const layer = picked === 'selfie' ? selfie! : satoshi!;
+    const t = transformByKey(picked)!;
     mode = {
       type: 'move',
       layer: picked,
       startX: p.x,
       startY: p.y,
-      startT: { ...layer.t }
+      startT: { ...t }
     };
     requestRender();
   } else {
@@ -306,27 +346,27 @@ function pointerMove(e: PointerEvent) {
   if (!mode) return;
 
   if (mode.type === 'move') {
-    const layer = mode.layer === 'selfie' ? selfie : satoshi;
-    if (!layer) return;
-    layer.t.x = mode.startT.x + (p.x - mode.startX);
-    layer.t.y = mode.startT.y + (p.y - mode.startY);
+    const t = transformByKey(mode.layer);
+    if (!t) return;
+    t.x = mode.startT.x + (p.x - mode.startX);
+    t.y = mode.startT.y + (p.y - mode.startY);
     requestRender();
   } else if (mode.type === 'resize') {
-    const layer = mode.layer === 'selfie' ? selfie : satoshi;
-    if (!layer) return;
-    const dx = p.x - layer.t.x;
-    const dy = p.y - layer.t.y;
+    const t = transformByKey(mode.layer);
+    if (!t) return;
+    const dx = p.x - t.x;
+    const dy = p.y - t.y;
     const dist = Math.hypot(dx, dy);
     const factor = dist / mode.startDist;
-    layer.t.scale = clamp(mode.startScale * factor, 0.05, 4);
+    t.scale = clamp(mode.startScale * factor, 0.05, 6);
     requestRender();
   } else if (mode.type === 'pinch') {
     if (activePointers.size < 2) return;
     const pts = [...activePointers.values()];
     const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-    const layer = mode.layer === 'selfie' ? selfie : satoshi;
-    if (!layer) return;
-    layer.t.scale = clamp(mode.startScale * (dist / mode.startDist), 0.05, 4);
+    const t = transformByKey(mode.layer);
+    if (!t) return;
+    t.scale = clamp(mode.startScale * (dist / mode.startDist), 0.05, 6);
     requestRender();
   }
 }
@@ -344,10 +384,10 @@ function pointerUp(e: PointerEvent) {
 function onWheel(e: WheelEvent) {
   if (!selected) return;
   e.preventDefault();
-  const layer = selected === 'selfie' ? selfie : satoshi;
-  if (!layer) return;
+  const t = transformByKey(selected);
+  if (!t) return;
   const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
-  layer.t.scale = clamp(layer.t.scale * factor, 0.05, 4);
+  t.scale = clamp(t.scale * factor, 0.05, 6);
   requestRender();
 }
 
@@ -355,15 +395,29 @@ function clamp(v: number, min: number, max: number) {
   return Math.min(max, Math.max(min, v));
 }
 
+async function ensureCaptionFont() {
+  if (!('fonts' in document)) return;
+  try {
+    await document.fonts.load('44px "Zen Kurenaido"');
+    await document.fonts.ready;
+  } catch {
+    /* ignore — fallback font will be used */
+  }
+}
+
 async function initImages() {
   setLoading(true, 'アセットを読み込み中…');
-  const [b, f, s] = await Promise.all([
+  const [b, f, s, g] = await Promise.all([
     loadImage('back.png'),
     loadImage('cheki_00.png'),
-    loadImage('satoshi.webp')
+    loadImage('satoshi.webp'),
+    loadImage('nakatake_god.webp')
   ]);
+  await ensureCaptionFont();
   back = b;
   frame = f;
+  satoshiImg = s;
+  godImg = g;
 
   // Satoshi initial position: right-aligned, full-ish height (~85% canvas)
   const targetH = CANVAS_H * 0.85;
@@ -378,6 +432,17 @@ async function initImages() {
     }
   };
   setLoading(false);
+  requestRender();
+}
+
+function swapCharacter() {
+  if (!satoshi || !satoshiImg || !godImg) return;
+  const renderedH = satoshi.img.naturalHeight * satoshi.t.scale;
+  const next = currentChar === 'satoshi' ? godImg : satoshiImg;
+  satoshi.img = next;
+  satoshi.t.scale = renderedH / next.naturalHeight;
+  currentChar = currentChar === 'satoshi' ? 'god' : 'satoshi';
+  charSwapBtn.textContent = currentChar === 'satoshi' ? '中武GOD' : 'サトシ';
   requestRender();
 }
 
@@ -474,9 +539,13 @@ resetSelfieBtn.addEventListener('click', () => {
   requestRender();
 });
 
+charSwapBtn.addEventListener('click', swapCharacter);
+
 captionInput.addEventListener('input', () => {
   caption = captionInput.value;
+  if (!caption && selected === 'caption') selected = null;
   requestRender();
+  void ensureCaptionFont().then(() => requestRender());
 });
 
 downloadBtn.addEventListener('click', download);
@@ -490,16 +559,17 @@ canvas.addEventListener('wheel', onWheel, { passive: false });
 
 document.addEventListener('keydown', (e) => {
   if (!selected) return;
-  const layer = selected === 'selfie' ? selfie : satoshi;
-  if (!layer) return;
+  if (document.activeElement instanceof HTMLInputElement) return;
+  const t = transformByKey(selected);
+  if (!t) return;
   const step = e.shiftKey ? 20 : 4;
   let changed = false;
-  if (e.key === 'ArrowLeft') { layer.t.x -= step; changed = true; }
-  else if (e.key === 'ArrowRight') { layer.t.x += step; changed = true; }
-  else if (e.key === 'ArrowUp') { layer.t.y -= step; changed = true; }
-  else if (e.key === 'ArrowDown') { layer.t.y += step; changed = true; }
-  else if (e.key === '+' || e.key === '=') { layer.t.scale = clamp(layer.t.scale * 1.08, 0.05, 4); changed = true; }
-  else if (e.key === '-') { layer.t.scale = clamp(layer.t.scale / 1.08, 0.05, 4); changed = true; }
+  if (e.key === 'ArrowLeft') { t.x -= step; changed = true; }
+  else if (e.key === 'ArrowRight') { t.x += step; changed = true; }
+  else if (e.key === 'ArrowUp') { t.y -= step; changed = true; }
+  else if (e.key === 'ArrowDown') { t.y += step; changed = true; }
+  else if (e.key === '+' || e.key === '=') { t.scale = clamp(t.scale * 1.08, 0.05, 6); changed = true; }
+  else if (e.key === '-') { t.scale = clamp(t.scale / 1.08, 0.05, 6); changed = true; }
   if (changed) { e.preventDefault(); requestRender(); }
 });
 

@@ -176,6 +176,16 @@ html, body {
   color: #fff;
   border-color: #2a2a2a;
 }
+.btn.gold {
+  background: linear-gradient(135deg, #ffe27a 0%, #ffb700 45%, #b87b00 100%);
+  color: #3a2300;
+  border-color: #8a5d00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(255, 230, 130, 0.3) inset, 0 4px 12px rgba(184, 123, 0, 0.35);
+}
+.btn.gold:hover {
+  background: linear-gradient(135deg, #fff0a3 0%, #ffc72b 45%, #d08e00 100%);
+}
 
 .promo {
   margin-top: 20px;
