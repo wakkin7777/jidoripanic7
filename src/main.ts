@@ -4,7 +4,8 @@ const CANVAS_W = 750;
 const CANVAS_H = 1000;
 
 // Caption strip area (layer 5): user-editable 1-line text
-const CAPTION_AREA = { x: 40, y: 798, w: 670, h: 48 };
+const CAPTION_AREA = { x: 40, y: 760, w: 670, h: 48 };
+const CAPTION_FONT = '900 32px "Hiragino Kaku Gothic StdN", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", system-ui, sans-serif';
 
 interface Transform {
   x: number;
@@ -135,16 +136,21 @@ function drawSelection(layer: Layer) {
 function drawCaption() {
   if (!caption) return;
   ctx.save();
-  ctx.font = '600 30px "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif';
+  ctx.font = CAPTION_FONT;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#222';
   const cx = CAPTION_AREA.x + CAPTION_AREA.w / 2;
   const cy = CAPTION_AREA.y + CAPTION_AREA.h / 2;
   let text = caption;
   while (text.length > 0 && ctx.measureText(text).width > CAPTION_AREA.w - 16) {
     text = text.slice(0, -1);
   }
+  ctx.lineJoin = 'round';
+  ctx.miterLimit = 2;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#111';
+  ctx.strokeText(text, cx, cy);
+  ctx.fillStyle = '#111';
   ctx.fillText(text, cx, cy);
   ctx.restore();
 }
@@ -191,15 +197,22 @@ function renderForExport(): HTMLCanvasElement {
   if (satoshi) drawL(satoshi);
   if (frame) octx.drawImage(frame, 0, 0, CANVAS_W, CANVAS_H);
   if (caption) {
-    octx.font = '600 30px "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif';
+    octx.font = CAPTION_FONT;
     octx.textAlign = 'center';
     octx.textBaseline = 'middle';
-    octx.fillStyle = '#222';
     let text = caption;
     while (text.length > 0 && octx.measureText(text).width > CAPTION_AREA.w - 16) {
       text = text.slice(0, -1);
     }
-    octx.fillText(text, CAPTION_AREA.x + CAPTION_AREA.w / 2, CAPTION_AREA.y + CAPTION_AREA.h / 2);
+    const cx = CAPTION_AREA.x + CAPTION_AREA.w / 2;
+    const cy = CAPTION_AREA.y + CAPTION_AREA.h / 2;
+    octx.lineJoin = 'round';
+    octx.miterLimit = 2;
+    octx.lineWidth = 3;
+    octx.strokeStyle = '#111';
+    octx.strokeText(text, cx, cy);
+    octx.fillStyle = '#111';
+    octx.fillText(text, cx, cy);
   }
   return off;
 }
@@ -347,7 +360,7 @@ async function initImages() {
   const [b, f, s] = await Promise.all([
     loadImage('back.png'),
     loadImage('cheki_00.png'),
-    loadImage('satoshi.png')
+    loadImage('satoshi.webp')
   ]);
   back = b;
   frame = f;
@@ -372,7 +385,7 @@ async function handleFile(file: File) {
   try {
     setLoading(true, '背景を除去中… 初回はモデルをダウンロードします');
     const blob = await removeBackground(file, {
-      model: 'isnet',
+      model: 'isnet_fp16',
       progress: (key, current, total) => {
         if (total > 0) {
           const pct = Math.round((current / total) * 100);
