@@ -32,7 +32,6 @@ const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 const fileInput = document.getElementById('fileInput') as HTMLInputElement;
 const resetSelfieBtn = document.getElementById('resetSelfieBtn') as HTMLButtonElement;
-const charSwapBtn = document.getElementById('charSwapBtn') as HTMLButtonElement;
 const captionInput = document.getElementById('captionInput') as HTMLInputElement;
 const downloadBtn = document.getElementById('downloadBtn') as HTMLButtonElement;
 const shareBtn = document.getElementById('shareBtn') as HTMLButtonElement;
@@ -44,10 +43,6 @@ let back: HTMLImageElement | null = null;
 let frame: HTMLImageElement | null = null;
 let satoshi: Layer | null = null;
 let selfie: Layer | null = null;
-let satoshiImg: HTMLImageElement | null = null;
-let godImg: HTMLImageElement | null = null;
-type CharKey = 'satoshi' | 'god';
-let currentChar: CharKey = 'satoshi';
 let selected: LayerKey | null = null;
 let caption = '';
 const captionT: Transform = { x: CANVAS_W / 2, y: 720, scale: 1 };
@@ -407,17 +402,14 @@ async function ensureCaptionFont() {
 
 async function initImages() {
   setLoading(true, 'アセットを読み込み中…');
-  const [b, f, s, g] = await Promise.all([
+  const [b, f, s] = await Promise.all([
     loadImage('back.png'),
     loadImage('cheki_00.png'),
-    loadImage('satoshi.webp'),
-    loadImage('nakatake_god.webp')
+    loadImage('satoshi.webp')
   ]);
   await ensureCaptionFont();
   back = b;
   frame = f;
-  satoshiImg = s;
-  godImg = g;
 
   // Satoshi initial position: right-aligned, full-ish height (~85% canvas)
   const targetH = CANVAS_H * 0.85;
@@ -432,17 +424,6 @@ async function initImages() {
     }
   };
   setLoading(false);
-  requestRender();
-}
-
-function swapCharacter() {
-  if (!satoshi || !satoshiImg || !godImg) return;
-  const renderedH = satoshi.img.naturalHeight * satoshi.t.scale;
-  const next = currentChar === 'satoshi' ? godImg : satoshiImg;
-  satoshi.img = next;
-  satoshi.t.scale = renderedH / next.naturalHeight;
-  currentChar = currentChar === 'satoshi' ? 'god' : 'satoshi';
-  charSwapBtn.textContent = currentChar === 'satoshi' ? '中武GOD' : 'サトシ';
   requestRender();
 }
 
@@ -538,8 +519,6 @@ resetSelfieBtn.addEventListener('click', () => {
   resetSelfieBtn.disabled = true;
   requestRender();
 });
-
-charSwapBtn.addEventListener('click', swapCharacter);
 
 captionInput.addEventListener('input', () => {
   caption = captionInput.value;
