@@ -29,6 +29,18 @@ html, body {
   text-align: center;
   padding: 8px 0 12px;
 }
+.header .tagline {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 8px 22px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #3a2300;
+  background: linear-gradient(135deg, #ffe27a 0%, #ffb700 100%);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(255, 183, 0, 0.35);
+}
 .header h1 {
   margin: 0;
   font-size: 32px;
@@ -36,15 +48,44 @@ html, body {
   line-height: 1.2;
 }
 .header .lead {
-  margin: 8px 0 0;
-  font-size: 16px;
+  margin: 10px 0 0;
+  font-size: 20px;
   color: var(--accent);
   font-weight: 700;
 }
+.header .desc {
+  margin: 8px 0 0;
+  font-size: 17px;
+  color: #e8e8ec;
+  font-weight: 600;
+  line-height: 1.5;
+}
 .header .sub {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 12px;
+}
+
+.example {
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.example img {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.example figcaption {
+  font-size: 16px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .main {
@@ -304,4 +345,47 @@ html, body {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.app-promo {
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+.app-promo-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 44px 14px 16px;
+  position: relative;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(135deg, #4a90e2 0%, #2d5bb8 60%, #1a3d8f 100%);
+  box-shadow: 0 6px 20px rgba(45, 91, 184, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+}
+.app-promo-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(45, 91, 184, 0.45);
+}
+.app-promo-link:active {
+  transform: translateY(1px);
+}
+.app-promo-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+.app-promo-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.app-promo-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
 }

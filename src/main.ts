@@ -441,14 +441,15 @@ async function handleFile(file: File) {
     });
     const url = URL.createObjectURL(blob);
     const img = await loadImage(url);
-    const targetH = CANVAS_H * 0.7;
-    const scale = targetH / img.naturalHeight;
+    const maxW = CANVAS_W * 0.48;
+    const maxH = CANVAS_H * 0.7;
+    const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
     const w = img.naturalWidth * scale;
     selfie = {
       img,
       t: {
         x: w / 2 + 30,
-        y: CANVAS_H * 0.5,
+        y: CANVAS_H * 0.55,
         scale
       }
     };
