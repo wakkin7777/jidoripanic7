@@ -514,27 +514,32 @@ function openBlobForManualSave(blob: Blob) {
 // continuation. Any `await` between the click handler and share() can break
 // the gesture. Keep share() inside canvas.toBlob() callback (synchronous from
 // the perspective of the gesture) and do NOT refactor to `await canvasToBlob`.
+//
+// Web Share is only used as the save path on iOS — on desktop Windows
+// Chrome/Edge now implements canShare({files}) and would open the system
+// share dialog, which users don't expect from a "保存" button. Elsewhere
+// (Android/desktop) <a download> works fine.
 function download() {
   const off = renderForExport();
   off.toBlob(async (blob) => {
     if (!blob) return;
     const filename = `cheki_${Date.now()}.png`;
-    const file = new File([blob], filename, { type: 'image/png' });
 
-    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-      try {
-        await navigator.share({ files: [file], title: '2ショットチェキ' });
-        return;
-      } catch (e) {
-        const name = (e as DOMException).name;
-        if (name === 'AbortError') return;
-        // NotAllowedError etc.: on iOS we can't <a download>, guide manual save
-        if (isIOS()) {
-          openBlobForManualSave(blob);
+    if (isIOS()) {
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        try {
+          await navigator.share({ files: [file], title: '2ショットチェキ' });
           return;
+        } catch (e) {
+          const name = (e as DOMException).name;
+          if (name === 'AbortError') return;
         }
       }
+      openBlobForManualSave(blob);
+      return;
     }
+
     downloadBlob(blob, filename);
   }, 'image/png');
 }
