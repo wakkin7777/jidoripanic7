@@ -25,20 +25,26 @@
 </head>
 <body>
   <div id="app">
-    <header class="header">
-      <p class="tagline">13巻配信開始記念</p>
-      <h1>回胴風雲児<br />２ショットメーカー</h1>
-      <p class="lead">サトシと２ショットを撮影しよう</p>
-      <p class="desc">ペットなど写真を入れると自動で２ショット写真にできます。</p>
-      <p class="sub">#回胴風雲児 #パニック7 #パチスロ漫画</p>
-    </header>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="tagline">13巻配信開始記念</p>
+        <h1>回胴風雲児<br />２ショットメーカー</h1>
+        <p class="lead">サトシと２ショットを撮影しよう！</p>
+        <p class="desc">ペットなど写真を入れると自動で２ショット写真にできます。</p>
+        <label for="fileInput" class="btn primary hero-cta">
+          <span class="hero-cta-icon" aria-hidden="true">↑</span>
+          画像をアップロード
+        </label>
+        <p class="hero-hint">JPG / PNG / WebP 対応</p>
+      </div>
+      <figure class="hero-preview">
+        <img src="/example_pet.webp" alt="猫とサトシの2ショット例" width="450" height="600" />
+      </figure>
+    </section>
+
+    <p class="hero-sub">#回胴風雲児 #パニック7 #パチスロ漫画</p>
 
     <main class="main">
-      <figure class="example">
-        <img src="/example_pet.webp" alt="猫とサトシの2ショット例" width="450" height="600" />
-        <figcaption>動物の写真でもOK！</figcaption>
-      </figure>
-
       <div class="canvas-wrap">
         <canvas id="stage" width="750" height="1000"></canvas>
         <div id="loading" class="loading hidden">
