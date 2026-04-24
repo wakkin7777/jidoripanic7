@@ -18,6 +18,8 @@
 
 import { removeBackground } from '@imgly/background-removal';
 
+const R2_BASE_URL = 'https://pub-b83edfb3b77d46ea8d8672923b21b501.r2.dev';
+
 const CANVAS_W = 750;
 const CANVAS_H = 1000;
 
@@ -421,9 +423,9 @@ async function ensureCaptionFont() {
 async function initImages() {
   setLoading(true, 'アセットを読み込み中…');
   const [b, f, s] = await Promise.all([
-    loadImage('back.png'),
-    loadImage('cheki_00.png'),
-    loadImage('satoshi.webp')
+    loadImage(`${R2_BASE_URL}/back.png`),
+    loadImage(`${R2_BASE_URL}/cheki_00.png`),
+    loadImage(`${R2_BASE_URL}/satoshi.webp`)
   ]);
   await ensureCaptionFont();
   back = b;
