@@ -464,10 +464,6 @@ async function handleFile(file: File) {
   }
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png'): Promise<Blob | null> {
-  return new Promise((resolve) => canvas.toBlob((b) => resolve(b), type));
-}
-
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -479,49 +475,78 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-async function download() {
-  const off = renderForExport();
-  const blob = await canvasToBlob(off);
-  if (!blob) return;
-  const filename = `cheki_${Date.now()}.png`;
-  const file = new File([blob], filename, { type: 'image/png' });
-
-  // iOS Safari doesn't honor <a download> for blob URLs and shows an
-  // "external application" dialog. Prefer Web Share API with files —
-  // the native share sheet includes "画像を保存" which writes to Photos.
-  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
-    try {
-      await navigator.share({ files: [file], title: '2ショットチェキ' });
-      return;
-    } catch (e) {
-      if ((e as DOMException).name === 'AbortError') return;
-      // otherwise fall through to <a download>
-    }
-  }
-
-  downloadBlob(blob, filename);
+function isIOS() {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-async function share() {
-  const off = renderForExport();
-  const blob = await canvasToBlob(off);
-  if (!blob) return;
-  const file = new File([blob], 'cheki.png', { type: 'image/png' });
-  const shareData: ShareData = {
-    title: '2ショットチェキ',
-    text: '回胴風雲児 2ショットチェキを作ったよ！\n回胴風雲児13配信中！\nhttps://x.gd/w92hY\n#回胴風雲児 #パニック7 #パチスロ漫画',
-    files: [file]
-  };
-  if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
-    try {
-      await navigator.share(shareData);
-      return;
-    } catch (e) {
-      if ((e as DOMException).name === 'AbortError') return;
-    }
+function openBlobForManualSave(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, '_blank');
+  if (!w) {
+    alert('ポップアップがブロックされました。画像保存を許可してから再度お試しください。');
+  } else {
+    alert('画像を長押しして「"写真"に追加」で保存してください。');
   }
-  downloadBlob(blob, `cheki_${Date.now()}.png`);
-  alert('お使いの環境ではWeb Shareに未対応のため、画像を保存しました。');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// NOTE: iOS Safari requires navigator.share() to run inside the user-gesture
+// continuation. Any `await` between the click handler and share() can break
+// the gesture. Keep share() inside canvas.toBlob() callback (synchronous from
+// the perspective of the gesture) and do NOT refactor to `await canvasToBlob`.
+function download() {
+  const off = renderForExport();
+  off.toBlob(async (blob) => {
+    if (!blob) return;
+    const filename = `cheki_${Date.now()}.png`;
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+      try {
+        await navigator.share({ files: [file], title: '2ショットチェキ' });
+        return;
+      } catch (e) {
+        const name = (e as DOMException).name;
+        if (name === 'AbortError') return;
+        // NotAllowedError etc.: on iOS we can't <a download>, guide manual save
+        if (isIOS()) {
+          openBlobForManualSave(blob);
+          return;
+        }
+      }
+    }
+    downloadBlob(blob, filename);
+  }, 'image/png');
+}
+
+function share() {
+  const off = renderForExport();
+  off.toBlob(async (blob) => {
+    if (!blob) return;
+    const file = new File([blob], 'cheki.png', { type: 'image/png' });
+    const shareData: ShareData = {
+      title: '2ショットチェキ',
+      text: '回胴風雲児 2ショットチェキを作ったよ！\n回胴風雲児13配信中！\nhttps://x.gd/w92hY\n#回胴風雲児 #パニック7 #パチスロ漫画',
+      files: [file]
+    };
+    if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (e) {
+        const name = (e as DOMException).name;
+        if (name === 'AbortError') return;
+        if (isIOS()) {
+          openBlobForManualSave(blob);
+          return;
+        }
+      }
+    }
+    downloadBlob(blob, `cheki_${Date.now()}.png`);
+    alert('お使いの環境ではWeb Shareに未対応のため、画像を保存しました。');
+  }, 'image/png');
 }
 
 function updateXShareHref() {
