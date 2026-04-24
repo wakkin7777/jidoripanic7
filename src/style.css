@@ -248,11 +248,6 @@ html, body {
   border-color: var(--accent);
 }
 .btn.primary:hover { background: #ffd633; }
-.btn.x-btn {
-  background: #000;
-  color: #fff;
-  border-color: #2a2a2a;
-}
 .btn.gold {
   background: linear-gradient(135deg, #ffe27a 0%, #ffb700 45%, #b87b00 100%);
   color: #3a2300;
