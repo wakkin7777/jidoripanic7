@@ -575,15 +575,16 @@ function share() {
 }
 
 function updateXShareHref() {
-  // Consolidate everything into the `text` parameter: the X Android app's
-  // deep-link handler reliably reads `text` but often drops `url` and
-  // `hashtags`, producing an empty composer on mobile.
+  // Everything goes in `text`: the X Android app's deep-link handler
+  // often drops `url` and `hashtags` params, and also appears to choke on
+  // %0A (newline) in the text, producing an empty composer. Use single
+  // spaces as separators so the payload survives on every platform.
   const body = [
     '回胴風雲児の2ショットチェキを作ったよ！',
     '回胴風雲児13巻5/1配信開始！',
     'https://x.gd/w92hY',
     '#回胴風雲児 #パニック7 #パチスロ漫画'
-  ].join('\n');
+  ].join(' ');
   xShareBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(body)}`;
 }
 
