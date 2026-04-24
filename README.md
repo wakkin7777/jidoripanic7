@@ -1,5 +1,13 @@
 # JIDORIPANIC7
 
+> ⚠️ **IMPORTANT / 重要な注意事項** ⚠️
+>
+> **English**: The character images included in this repository (`satoshi.webp`, `cheki_00.png`, etc.) are copyrighted by **© MORI YUSAKU, GENDA SATOSHI, GUIDEWORKS**. These images are **NOT** licensed under AGPL-3.0. Redistribution, commercial use, modification, or any secondary use of the character images is **STRICTLY PROHIBITED** without explicit permission from the copyright holders.
+>
+> **日本語**: 本リポジトリに含まれるキャラクター画像（`satoshi.webp`, `cheki_00.png` など）は **© MORI YUSAKU, GENDA SATOSHI, GUIDEWORKS** が著作権を保有しています。これらの画像は **AGPL-3.0 の適用範囲外** です。キャラクター画像の**二次配布・商用利用・改変・その他二次利用は著作権者の明示的な許諾なく行うことを固く禁じます**。
+
+---
+
 宣材用2ショットチェキ風画像を生成するWebアプリ。
 
 🌐 **公開URL**: https://jidoripanic7.pages.dev/
@@ -17,25 +25,42 @@
 
 ## ライセンス
 
-### コード
+本プロジェクトは**デュアルライセンス**構成です。
 
-本プロジェクトのソースコードは **[GNU Affero General Public License v3.0 (AGPL-3.0)](./LICENSE)** の下で公開されています。
+### コード部分（AGPL-3.0）
 
-### キャラクター画像
+ソースコード（`.ts`, `.html`, `.css`, 設定ファイル等）は **[GNU Affero General Public License v3.0 (AGPL-3.0)](./LICENSE)** の下で公開されています。
 
-リポジトリに含まれるキャラクター画像（`satoshi.png` など）は以下の著作権者が権利を保有しています:
+- 改変・再配布自由（ただしAGPL-3.0の条項に従うこと）
+- ネットワーク経由で利用させる場合、利用者にソースコードを提供する義務あり
 
-**© MORI YUSAKU, GENDA SATOSHI, GUIDEWORKS**
+### キャラクター画像（All Rights Reserved）
 
-- 商用利用・二次配布・転載は禁止です
-- 本プロジェクトをフォーク・セルフホストする場合、**キャラクター画像を独自に用意する必要があります**
-- キャラクター画像はAGPL-3.0の適用範囲外です
+以下のファイルは **AGPL-3.0 の適用範囲外** です:
+
+- `public/satoshi.webp`
+- `public/cheki_00.png`
+- `public/example_pet.webp`
+- `public/back.png`
+
+**Copyright © MORI YUSAKU, GENDA SATOSHI, GUIDEWORKS. All Rights Reserved.**
+
+以下の行為を**禁止**します:
+- 再配布（ファイル単体または組み込み問わず）
+- 商用利用
+- 改変・加工・派生物の作成
+- 本プロジェクト以外のサービス・製品への転用
+- SNS等での無断転載（本サービス上で生成された画像を個人が楽しむ範囲を除く）
 
 ## セルフホストする場合の注意
 
-1. リポジトリをクローン後、キャラクター画像は含まれない想定でコードを動作確認してください
-2. 独自のキャラクター画像を `public/` または `src/assets/` に配置してください
-3. 該当ファイルパスはソースコード内を参照
+**本プロジェクトをフォーク・セルフホストする場合、キャラクター画像を独自に用意する必要があります。** GUIDEWORKS のキャラクター画像をそのまま使用することは著作権侵害となります。
+
+画像参照箇所:
+- `index.html` の OGP/Twitter Card メタタグ
+- `src/main.ts` の `loadImage()` 呼び出し（L424-426）
+
+これらを自分のアセットに差し替えてから使用してください。
 
 ## 開発
 
@@ -52,5 +77,9 @@ npm run build
 
 ## 著作権
 
-- コード: Copyright (C) 2026 WAKKIN
-- キャラクター: © MORI YUSAKU, GENDA SATOSHI, GUIDEWORKS
+- **コード**: Copyright (C) 2026 WAKKIN
+- **キャラクター画像**: © MORI YUSAKU, GENDA SATOSHI, GUIDEWORKS
+
+## お問い合わせ
+
+キャラクター画像の使用許諾に関する問い合わせは GUIDEWORKS にお願いします。
