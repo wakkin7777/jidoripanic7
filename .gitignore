@@ -1,21 +1,47 @@
+# Dependencies
 node_modules
+.pnpm-store/
+
+# Build outputs
 dist
 dist-ssr
-.vite
+build/
+.output/
 
-# psd source files (too large)
-*.psd
-
-# OS / editor
-.DS_Store
-Thumbs.db
-.vscode
-.idea
-
-# env / logs
+# Environment
 .env
 .env.local
+.env.*.local
+.env.production
+.env.development
 *.local
+
+# Cloudflare
+.wrangler/
+wrangler.toml.local
+
+# Editor / OS
+.vscode
+.idea
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+.vite
+.vite/
+
+# PSD source files (too large)
+*.psd
+
+# Unused assets kept locally only
+cheki.png
