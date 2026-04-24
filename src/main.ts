@@ -553,7 +553,7 @@ function share() {
     const file = new File([blob], 'cheki.png', { type: 'image/png' });
     const shareData: ShareData = {
       title: '2ショットチェキ',
-      text: '回胴風雲児 2ショットチェキを作ったよ！\n回胴風雲児13配信中！\nhttps://x.gd/w92hY\n#回胴風雲児 #パニック7 #パチスロ漫画',
+      text: '回胴風雲児 2ショットチェキを作ったよ！\n回胴風雲児13巻5/1配信開始！\nhttps://x.gd/w92hY\n#回胴風雲児 #パニック7 #パチスロ漫画',
       files: [file]
     };
     if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
@@ -575,10 +575,16 @@ function share() {
 }
 
 function updateXShareHref() {
-  const text = encodeURIComponent('回胴風雲児の2ショットチェキを作ったよ！\n回胴風雲児13配信中！');
-  const url = encodeURIComponent('https://x.gd/w92hY');
-  const hashtags = encodeURIComponent('回胴風雲児,パニック7,パチスロ漫画');
-  xShareBtn.href = `https://twitter.com/intent/tweet?text=${text}&url=${url}&hashtags=${hashtags}`;
+  // Consolidate everything into the `text` parameter: the X Android app's
+  // deep-link handler reliably reads `text` but often drops `url` and
+  // `hashtags`, producing an empty composer on mobile.
+  const body = [
+    '回胴風雲児の2ショットチェキを作ったよ！',
+    '回胴風雲児13巻5/1配信開始！',
+    'https://x.gd/w92hY',
+    '#回胴風雲児 #パニック7 #パチスロ漫画'
+  ].join('\n');
+  xShareBtn.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(body)}`;
 }
 
 fileInput.addEventListener('change', () => {
