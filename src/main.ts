@@ -464,42 +464,64 @@ async function handleFile(file: File) {
   }
 }
 
-function download() {
+function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png'): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob((b) => resolve(b), type));
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function download() {
   const off = renderForExport();
-  off.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cheki_${Date.now()}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }, 'image/png');
+  const blob = await canvasToBlob(off);
+  if (!blob) return;
+  const filename = `cheki_${Date.now()}.png`;
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  // iOS Safari doesn't honor <a download> for blob URLs and shows an
+  // "external application" dialog. Prefer Web Share API with files —
+  // the native share sheet includes "画像を保存" which writes to Photos.
+  if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+    try {
+      await navigator.share({ files: [file], title: '2ショットチェキ' });
+      return;
+    } catch (e) {
+      if ((e as DOMException).name === 'AbortError') return;
+      // otherwise fall through to <a download>
+    }
+  }
+
+  downloadBlob(blob, filename);
 }
 
 async function share() {
   const off = renderForExport();
-  off.toBlob(async (blob) => {
-    if (!blob) return;
-    const file = new File([blob], 'cheki.png', { type: 'image/png' });
-    const shareData: ShareData = {
-      title: '2ショットチェキ',
-      text: '回胴風雲児 2ショットチェキを作ったよ！\n回胴風雲児13配信中！\nhttps://x.gd/w92hY\n#回胴風雲児 #パニック7 #パチスロ漫画',
-      files: [file]
-    };
-    if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch (e) {
-        if ((e as DOMException).name === 'AbortError') return;
-      }
+  const blob = await canvasToBlob(off);
+  if (!blob) return;
+  const file = new File([blob], 'cheki.png', { type: 'image/png' });
+  const shareData: ShareData = {
+    title: '2ショットチェキ',
+    text: '回胴風雲児 2ショットチェキを作ったよ！\n回胴風雲児13配信中！\nhttps://x.gd/w92hY\n#回胴風雲児 #パニック7 #パチスロ漫画',
+    files: [file]
+  };
+  if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (e) {
+      if ((e as DOMException).name === 'AbortError') return;
     }
-    download();
-    alert('お使いの環境ではWeb Shareに未対応のため、画像を保存しました。');
-  }, 'image/png');
+  }
+  downloadBlob(blob, `cheki_${Date.now()}.png`);
+  alert('お使いの環境ではWeb Shareに未対応のため、画像を保存しました。');
 }
 
 function updateXShareHref() {
